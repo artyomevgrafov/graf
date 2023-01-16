@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en-US" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="shortcut icon" href="https://c.s-microsoft.com/favicon.ico?v2" />
+    <title>My Sample PWA</title>
+	<link rel="manifest" href="/manifest.json">
+  </head>
+  <body>
+    <h1>My Sample PWA</h1>
+	<div>
+        <button id="day-btn">Day</button>
+        <button id="month-btn">Month</button>
+        <button id="year-btn">Year</button>
+		<button id="swipe-left">Previous</button>
+		<button id="swipe-right">Next</button>
+    </div>
+	<canvas id="myChart"></canvas>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>	
+	<script src="Chart.js"></script>
+  </body>
+  <script>
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js', { scope: '/' });
+}
+</script>
+<script>
+	let currentDate = new Date().toISOString().slice(0,10);
+    fetch(`http://localhost:3000/data?date=${currentDate}`)
+  .then(response => response.json())
+  .then(data => {
+    let dataByFirmName = data.reduce((acc, cur) => {
+      if(!acc[cur.firm_name]) acc[cur.firm_name] = {firm_name: cur.firm_name, dohod: 0, prihod: 0};
+      acc[cur.firm_name].dohod += cur.dohod;
+      acc[cur.firm_name].prihod += cur.prihod;
+      return acc;
+    },{});
+    let firm_name = Object.values(dataByFirmName).map(d => d.firm_name);
+    let dohod = Object.values(dataByFirmName).map(d => d.dohod);
+    let prihod = Object.values(dataByFirmName).map(d => d.prihod);
+    let ctx = document.getElementById('myChart').getContext('2d');
+    let chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: firm_name,
+        datasets: [
+          {
+            label: 'Dohod',
+            data: dohod,
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1
+          },
+          {
+            label: 'Prihod',
+            data: prihod,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          }
+        ]
+      },
+       options: {
+        scales: {
+            xAxes: [{
+                stacked: true
+            }],
+            yAxes: [{
+                stacked: true
+            }]
+        }
+      }
+    });
+  });
+    </script>
+</html>
+
+
